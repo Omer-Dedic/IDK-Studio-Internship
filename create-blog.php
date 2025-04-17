@@ -95,12 +95,9 @@ if(!isset($_SESSION['id'])){
     <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <!-- NOTYF STIL I SKRIPTA -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
-<script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
-
-<!-- IKONICE -->
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 
     <title>Create Blog</title>
@@ -155,13 +152,12 @@ if(!isset($_SESSION['id'])){
     <!--Page content-->
         <div class="content-dashboard-create-blog">
 
-                <form id="blogForm" class="forma-create-blog" action="" method="post" enctype="multipart/form-data">
+                <form id="blogForm" class="forma-create-blog" method="post" action="unos_bloga.php" enctype="multipart/form-data">
                     <h1 class="create-blog-header"> KREIRAJ BLOG </h1>
                     <div class="pdtpblog">
                         <div class="top-top-top">
                                 <div class="naslov-create">
                                     <label for="naslov-blog">Naslov:</label><br>
-<!--<input class="top-input-field-create-blog" type="text" id="naslov-blog" name="naslov-blog" required>-->
                                     <input class="top-input-field-create-blog" type="text" id="blogTitle" name="naslov-blog" required>
                                 </div>
                                 <div class="podnaslov-create">
@@ -191,7 +187,7 @@ if(!isset($_SESSION['id'])){
                     </div>
                     <div class="publish-wrapper">
                         <div class="btn-group">
-                            <button class="btn-create-blog" id="mainPublishBtn" type="button" data-option="now">Objavi odmah</button>
+                            <button class="btn-create-blog" id="mainPublishBtn" name="mainPublishBtn" type="submit" data-option="now">Objavi odmah</button>
                             <button type="button" class="dropdown-toggle"></button>
                             <ul class="dropdown-menu">
                             <li data-option="now">Objavi odmah</li>
@@ -209,17 +205,125 @@ if(!isset($_SESSION['id'])){
         </div>
     <!--End of page content-->
 
-
 <script src="https://unpkg.com/filepond/dist/filepond.js"></script>
-<script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script>
-FilePond.create(document.querySelector('input[type="file"]'), {
-        labelIdle: 'Kliknite ili prevucite sliku ovdje',
+    let publishOption = 'now'; // default
+
+        document.querySelectorAll('.dropdown-menu li').forEach(item => {
+            item.addEventListener('click', function () {
+                publishOption = this.getAttribute('data-option');
+
+                // Promijeni i tekst dugmeta (opcionalno)
+                document.getElementById('mainPublishBtn').textContent = this.textContent;
+
+                // Prikaži/skrivaj polje za datum
+                document.getElementById('schedulePicker').style.display = (publishOption === 'later') ? 'block' : 'none';
+            });
+        });
+
+
+    const inputElement = document.querySelector('#slika');
+    const pond = FilePond.create(inputElement, {
+        instantUpload: false
     });
+
+    document.getElementById('blogForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const naslov = document.querySelector('input[name="naslov-blog"]').value;
+    const podnaslov = document.querySelector('input[name="podnaslov-blog"]').value;
+    const kljucne_rijeci = document.querySelector('input[name="keywords-blog"]').value;
+    const tekst_bloga = quill.root.innerHTML.trim();
+    const plain_text = quill.getText().trim();
+    const file = pond.getFile();
+
+    if (!naslov || !podnaslov || !kljucne_rijeci || plain_text.length < 5) {
+        notyf.open({
+            type: 'warning',
+            message: 'Ispunite sva polja.',
+        });
+        return;
+    }
+
+    if (!file) {
+        notyf.open({
+            type: 'warning',
+            message: 'Molimo izaberite sliku.',
+        });
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('naslov-blog', naslov);
+    formData.append('podnaslov-blog', podnaslov);
+    formData.append('keywords-blog', kljucne_rijeci);
+    formData.append('blogContent', tekst_bloga);
+    formData.append('slika', file.file);
+    formData.append('mainPublishBtn', publishOption === 'now' ? 'Objavi odmah' : 'Objavi kasnije');
+
+    if (publishOption === 'later') {
+        const zakazaniDatum = document.getElementById('scheduleDate').value;
+        if (!zakazaniDatum) {
+            notyf.open({
+                type: 'warning',
+                message: 'Molimo unesite datum zakazane objave.',
+            });
+            return;
+        }
+        formData.append('scheduleDate', zakazaniDatum);
+    }
+
+    try {
+        const response = await fetch('unos_bloga.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            window.location.href = 'blog-dash.php?success=1';
+        } else if (result.status === 'error') {
+            notyf.error(result.message || 'Greška pri spremanju bloga.');
+        } else if (result.status === 'warning') {
+            notyf.open({
+                type: 'warning',
+                message: result.message
+            });
+        } else {
+            notyf.error('Nepoznata greška.');
+        }
+    } catch (error) {
+        console.error(error);
+        notyf.error('Greška pri slanju podataka.');
+    }
+    });
+
+
+    fetch("backend/unos_bloga.php", {
+    method: "POST",
+    body: formData,
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === "success") {
+            notyf.success('Blog uspješno unesen u bazu!');
+            setTimeout(() => {
+                window.location.href = "blog-dash.php";
+            }, 1500);
+        } else {
+            notyf.error(result.message || 'Došlo je do greške prilikom unosa.');
+        }
+    })
+    .catch(error => {
+        console.error('Greška:', error);
+        notyf.error('Došlo je do greške u mreži.');
+    });
+
 </script>
 <script>
-  const notyf = new Notyf({
+    const notyf = new Notyf({
         duration: 4000,
         dismissible: true,
         position: {
@@ -256,7 +360,6 @@ FilePond.create(document.querySelector('input[type="file"]'), {
             }
         ]
     });
-    notyf.success('Rijesiti bazu i popupove');
 
     const quill = new Quill('#blogText', {
         theme: 'snow',
@@ -269,6 +372,10 @@ FilePond.create(document.querySelector('input[type="file"]'), {
                 ['clean']
             ]
         }
+    });
+
+    document.getElementById('blogForm').addEventListener('submit', function() {
+    document.getElementById('blogContent').value = quill.root.innerHTML;
     });
 
     const mainBtn = document.getElementById('mainPublishBtn');
@@ -309,128 +416,11 @@ FilePond.create(document.querySelector('input[type="file"]'), {
         });
     });
 
-    mainBtn.addEventListener('click', () => {
-    const selected = mainBtn.getAttribute('data-option');
-    const dateValue = document.getElementById('scheduleDate').value;
-    const title = document.getElementById('blogTitle').value;
-    const blogContent = quill.getText().trim();
-
-    if (!title || blogContent.length < 5) {
-        notyf.open({
-            type: 'warning',
-            message: 'Ispunite sva polja!',
-        });
-        return;
-    }
-
-    if (selected === 'now') {
-        notyf.open({
-            type: 'error',
-            message: 'Objava odmah trenutno nije omogućena.',
-        });
-    } else {
-        if (!dateValue) {
-            notyf.open({
-                type: 'warning',
-                message: 'Molimo odaberite datum i vrijeme.',
-            });
-            return;
-        }
-
-        notyf.open({
-            type: 'success',
-            message: `Blog će biti objavljen ${dateValue}`,
-        });
-    }
-});
-
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.btn-group')) {
             menu.style.display = 'none';
         }
     });
 </script>
-
-<!--
-<script>
-    FilePond.create(document.querySelector('input[type="file"]'), {
-        labelIdle: 'Kliknite ili prevucite sliku ovdje',
-    });
-
-    const quill = new Quill('#blogText', {
-        theme: 'snow',
-        placeholder: 'Unesite tekst bloga...',
-        modules: {
-            toolbar: [
-                ['bold', 'italic', 'underline'],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                ['link'],
-                ['clean']
-            ]
-        }
-    });
-
-    const mainBtn = document.getElementById('mainPublishBtn');
-    const toggleBtn = document.querySelector('.dropdown-toggle');
-    const menu = document.querySelector('.dropdown-menu');
-    const schedulePicker = document.getElementById('schedulePicker');
-
-    toggleBtn.addEventListener('click', () => {
-    const rect = toggleBtn.getBoundingClientRect();
-    const menuHeight = menu.offsetHeight || 80;
-
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-
-    if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
-        menu.style.bottom = '100%';
-        menu.style.top = 'auto';
-    } else {
-        menu.style.top = '100%';
-        menu.style.bottom = 'auto';
-    }
-
-    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-    });
-
-
-    menu.querySelectorAll('li').forEach(item => {
-        item.addEventListener('click', () => {
-        const selected = item.getAttribute('data-option');
-        mainBtn.setAttribute('data-option', selected);
-        mainBtn.textContent = item.textContent;
-
-        menu.style.display = 'none';
-
-        if (selected === 'later') {
-            schedulePicker.style.display = 'block';
-        } else {
-            schedulePicker.style.display = 'none';
-        }
-        });
-    });
-
-    mainBtn.addEventListener('click', () => {
-        const selected = mainBtn.getAttribute('data-option');
-        if (selected === 'now') {
-        alert("Objavljuje se odmah!");
-        // Tu bi išlo slanje forme
-        } else {
-        const dateValue = document.getElementById('scheduleDate').value;
-        if (!dateValue) {
-            alert("Molimo odaberite datum i vrijeme.");
-            return;
-        }
-        alert("Blog će biti objavljen kasnije: " + dateValue);
-        // Također, tu ide slanje forme sa datumom
-        }
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.btn-group')) {
-        menu.style.display = 'none';
-        }
-    });
-</script>-->
 </body>
 </html>

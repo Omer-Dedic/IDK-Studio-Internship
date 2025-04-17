@@ -3111,6 +3111,42 @@ nav li:nth-child(5) {
   }
 }
 
+.waiting-blogs-div {
+  margin-top: 25px;
+}
+
+.blogs-created-waiting {
+  background-color: #f0f0f0;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.no-results {
+  padding-top: 10px;
+  font-weight: 400;
+  color: #767676;
+}
+
+.blog-waiting {
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.active-blogs {
+  margin-top: 25px;
+}
+
+.blogs-created-active {
+  background-color: #f0f0f0;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
 
 /*
 #charCount {

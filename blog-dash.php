@@ -88,9 +88,12 @@ if(!isset($_SESSION['id'])){
     <meta name="description" content="Template page">
     <meta name="keywords" content="Template page">
     <meta name="author" content="Omer Dedic">
-    <link href="style.css?v=1.2" rel="stylesheet">
+    <link href="style.css?v=1.3" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="icon" href="slike/icons8-capital-100.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <title>Dashboard-Blog</title>
 </head>
@@ -144,14 +147,82 @@ if(!isset($_SESSION['id'])){
     <!--Page content-->
         <div class="content-dashboard">
             <h1 class="pregledBlogova"> PREGLED BLOGOVA </h1>
-                <div class="create-dash-meow">
-                    <a href="create-blog.php" style="text-decoration: none;">
-                    <button class="create-btn-meow">
-                        <svg class="svg-icon-create-btn-meow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M4 12H20M12 4V20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>    
-                        <span class="create-btn-lable">Kreiraj blog</span>
-                    </button></a>
+
+            <div class="create-dash-meow">
+                <a href="create-blog.php" style="text-decoration: none;">
+                <button class="create-btn-meow">
+                    <svg class="svg-icon-create-btn-meow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M4 12H20M12 4V20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>    
+                    <span class="create-btn-lable">Kreiraj blog</span>
+                </button></a>
+            </div>
+
+            <div class="waiting-blogs-div">
+                <p class="blog-waiting"> Blogovi na čekanju: </p>
+                <div class="blogs-created-waiting">
+                    <!--treba ici prikaz iz baze-->
+                    <p class="no-results"> Trenutno nema dostupnih blogova </p>
                 </div>
+            </div>
+
+            <div class="active-blogs">
+                <p class="blog-waiting"> Aktivni blogovi: </p>
+                <div class="blogs-created-active">
+                    <!--treba ici prikaz iz baze-->
+                    <p class="no-results"> Trenutno nema dostupnih blogova </p>
+                </div>
+            </div>
         </div>
     <!--End of page content-->
+
+<script>
+const notyf = new Notyf({
+        duration: 4000,
+        dismissible: true,
+        position: {
+            x: 'right',
+            y: 'top'
+        },
+        types: [
+            {
+                type: 'success',
+                background: 'linear-gradient(to right,rgb(55, 195, 109) 14%,rgb(8, 149, 76) 59%)',
+                icon: {
+                    className: 'material-icons',
+                    tagName: 'i',
+                    text: 'check_circle'
+                }
+            },
+            {
+                type: 'error',
+                background: 'linear-gradient(to right,rgb(195, 69, 55) 14%,rgb(149, 8, 8) 59%)',
+                icon: {
+                    className: 'material-icons',
+                    tagName: 'i',
+                    text: 'error'
+                }
+            },
+            {
+                type: 'warning',
+                background: 'linear-gradient(to right,rgb(195, 181, 55) 14%,rgb(215, 201, 0) 59%)',
+                icon: {
+                    className: 'material-icons',
+                    tagName: 'i',
+                    text: 'warning'
+                }
+            }
+        ]
+    });
+
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") === "1") {
+        notyf.open({
+            type: 'success',
+            message: 'Blog je uspješno objavljen!'
+        });
+    }
+    
+</script>
+
 </body>
 </html>
