@@ -80,6 +80,23 @@ if(!isset($_SESSION['id'])){
     die();
 }
 
+$conn = new mysqli("localhost", "root", "", "bazapodataka");
+if ($conn->connect_error) {
+    die("Konekcija s bazom nije uspjela: " . $conn->connect_error);
+}
+
+$conn->query("UPDATE blogovi SET status = 'objavljeno' WHERE status = 'zakazano' AND datum_objave <= NOW()");
+
+$zakazani_query = "SELECT * FROM blogovi WHERE status = 'zakazano' ORDER BY datum_objave ASC";
+$objavljeni_query = "SELECT * FROM blogovi WHERE status = 'objavljeno' ORDER BY datum_objave DESC";
+
+$zakazani_result = $conn->query($zakazani_query);
+$objavljeni_result = $conn->query($objavljeni_query);
+
+$broj_zakazanih = $zakazani_result->num_rows;
+$broj_objavljenih = $objavljeni_result->num_rows;
+$ukupno_blogova = $broj_zakazanih + $broj_objavljenih;
+
 ?>
 <!DOCTYPE html>
 <head>
@@ -88,7 +105,7 @@ if(!isset($_SESSION['id'])){
     <meta name="description" content="Template page">
     <meta name="keywords" content="Template page">
     <meta name="author" content="Omer Dedic">
-    <link href="style.css?v=1.3" rel="stylesheet">
+    <link href="style.css?v=1.5" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="icon" href="slike/icons8-capital-100.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
@@ -147,7 +164,8 @@ if(!isset($_SESSION['id'])){
     <!--Page content-->
         <div class="content-dashboard">
             <h1 class="pregledBlogova"> PREGLED BLOGOVA </h1>
-
+            <h5 class="pregledBlogovaunder"> ukupno blogova: <?= $ukupno_blogova?></h5>
+            
             <div class="create-dash-meow">
                 <a href="create-blog.php" style="text-decoration: none;">
                 <button class="create-btn-meow">
@@ -157,20 +175,81 @@ if(!isset($_SESSION['id'])){
             </div>
 
             <div class="waiting-blogs-div">
-                <p class="blog-waiting"> Blogovi na čekanju: </p>
+                <p class="blog-waiting"> Blogovi na čekanju ( <?= $broj_zakazanih?> ): </p>
                 <div class="blogs-created-waiting">
-                    <!--treba ici prikaz iz baze-->
-                    <p class="no-results"> Trenutno nema dostupnih blogova </p>
+                    <?php if ($zakazani_result->num_rows > 0): ?>
+                        <?php while($row = $zakazani_result->fetch_assoc()): ?>
+                            <div class="blog-card waiting">
+                                <div class="img-blog">
+                                    <img src="uploads/<?= htmlspecialchars($row['slika']) ?>" alt="Slika bloga" style="width: 220px; height: 150px;">
+                                </div>
+                                <div class="blog-info">
+                                    <h4><?= htmlspecialchars($row['naslov']) ?></h4>
+                                    <p><?= htmlspecialchars($row['podnaslov']) ?></p>
+                                    <p><strong>Ključne riječi:</strong> <?= htmlspecialchars($row['kljucne_rijeci']) ?></p>
+                                    <small><strong>Zakazano za:</strong> <?= date('d-m-Y H:i', strtotime($row['datum_objave'])) ?></small>
+                                </div>
+                                <div class="top-buttons">
+                                    <a class="btn-del-blog" href="#" onclick="openDeleteModal(<?= $row['id'] ?>, '<?= htmlspecialchars($row['naslov'], ENT_QUOTES) ?>'); return false;">OBRIŠI</a>
+                                    <a class="btn-edit-blog" href="edit-blog.php?id=<?= $row['id'] ?>"> UREDI </a>
+                                </div>
+                                <div class="bottom-button-blog">
+                                    <a class="review-btn-blog" href="blog-overview.php?id=<?= $row['id'] ?>"> PREGLEDAJ </a>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <p class="no-results"> Trenutno nema dostupnih blogova </p>
+                    <?php endif; ?>
                 </div>
             </div>
 
             <div class="active-blogs">
-                <p class="blog-waiting"> Aktivni blogovi: </p>
+                <p class="blog-waiting"> Aktivni blogovi ( <?= $broj_objavljenih?> ): </p>
                 <div class="blogs-created-active">
-                    <!--treba ici prikaz iz baze-->
-                    <p class="no-results"> Trenutno nema dostupnih blogova </p>
+                    <?php if ($objavljeni_result->num_rows > 0): ?>
+                        <?php while($row = $objavljeni_result->fetch_assoc()): ?>
+                            <div class="blog-card active">
+                                <div class="img-blog">
+                                    <img src="uploads/<?= htmlspecialchars($row['slika']) ?>" alt="Slika bloga" style="width: 220px; height: 150px;">
+                                </div>
+                                <div class="blog-info">
+                                    <h4><?= htmlspecialchars($row['naslov']) ?></h4>
+                                    <p><?= htmlspecialchars($row['podnaslov']) ?></p>
+                                    <p><strong>Ključne riječi:</strong> <?= htmlspecialchars($row['kljucne_rijeci']) ?></p>
+                                    <small><strong>Objavljeno:</strong> <?= date('d-m-Y H:i', strtotime($row['datum_objave'])) ?></small>
+                                </div>
+                                <div class="top-buttons">
+                                    <a class="btn-del-blog" href="#" onclick="openDeleteModal(<?= $row['id'] ?>, '<?= htmlspecialchars($row['naslov'], ENT_QUOTES) ?>'); return false;">OBRIŠI</a>
+                                    <a class="btn-edit-blog" href="edit-blog.php?id=<?= $row['id'] ?>"> UREDI </a>
+                                </div>
+                                <div class="bottom-button-blog">
+                                    <a class="review-btn-blog" href="blog-overview.php?id=<?= $row['id'] ?>"> PREGLEDAJ </a>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <p class="no-results"> Trenutno nema dostupnih blogova </p>
+                    <?php endif; ?>
                 </div>
             </div>
+
+            <!--popup za delete-->
+            <div id="deleteModal" class="modal-overlay hidden">
+                <div class="modal-box">
+                    <h2>Potvrda brisanja</h2>
+                    <p id="deleteMessage">Da li ste sigurni da želite izbrisati blog?</p>
+                    <form method="post" action="obrisi-blog.php">
+                        <input type="hidden" name="blog_id" id="deleteBlogId">
+                        <div class="modal-buttons">
+                            <button type="submit" class="btn-delete">Obriši</button>
+                            <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Odustani</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!--end of popup-->
+
         </div>
     <!--End of page content-->
 
@@ -185,6 +264,15 @@ const notyf = new Notyf({
         types: [
             {
                 type: 'success',
+                background: 'linear-gradient(to right,rgb(55, 195, 109) 14%,rgb(8, 149, 76) 59%)',
+                icon: {
+                    className: 'material-icons',
+                    tagName: 'i',
+                    text: 'check_circle'
+                }
+            },
+            {
+                type: 'successEdit',
                 background: 'linear-gradient(to right,rgb(55, 195, 109) 14%,rgb(8, 149, 76) 59%)',
                 icon: {
                     className: 'material-icons',
@@ -213,16 +301,48 @@ const notyf = new Notyf({
         ]
     });
 
+    function openDeleteModal(blogId, naslov) {
+    document.getElementById('deleteBlogId').value = blogId;
+    document.getElementById('deleteMessage').innerText = `Da li ste sigurni da želite izbrisati blog "${naslov}"?`;
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("success") === "1") {
+            const scheduledDate = params.get("scheduled");
+
+            if (scheduledDate) {
+                notyf.open({
+                    type: 'success',
+                    message: `Blog je uspješno sačuvan! Datum objave: ${scheduledDate}`
+                });
+            } else {
+                notyf.open({
+                    type: 'success',
+                    message: 'Blog je uspješno objavljen!'
+                });
+            }
+        }
+    if (params.get("deleted") === "1") {
         notyf.open({
             type: 'success',
-            message: 'Blog je uspješno objavljen!'
+            message: 'Blog je uspješno izbrisan!'
         });
     }
-    
-</script>
+    if (params.get("successEdit") === "1") {
+        notyf.open({
+            type: 'success',
+            message: 'Blog je uspješno uređen!'
+        });
+    }
 
+    if (params.get("success") || params.get("deleted") || params.get("successEdit")) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+</script>
 </body>
 </html>

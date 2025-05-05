@@ -2,14 +2,13 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "bazapodataka"; // Zamijeni s nazivom svoje baze
+$dbname = "bazapodataka";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Greška u povezivanju s bazom: " . $conn->connect_error);
 }
 
-// Dohvati podatke za današnji datum
 $datum = date("Y-m-d");
 $sql = "SELECT uredjaj, broj_posjeta FROM posjete WHERE datum = '$datum'";
 $result = $conn->query($sql);

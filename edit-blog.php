@@ -80,6 +80,31 @@ if(!isset($_SESSION['id'])){
     die();
 }
 
+$conn = new mysqli("localhost", "root", "", "bazapodataka");
+if ($conn->connect_error) {
+    die("Konekcija s bazom nije uspjela: " . $conn->connect_error);
+}
+
+if (!isset($_GET['id'])) {
+    die("Nedostaje ID bloga.");
+}
+
+$id = intval($_GET['id']);
+$stmt = $conn->prepare("SELECT * FROM blogovi WHERE id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    die("Blog nije pronađen.");
+}
+
+$blog = $result->fetch_assoc();
+
+$datumObjave = strtotime($blog['datum_objave']);
+    $trenutnoVrijeme = time();
+    $sakrijDiv = $datumObjave < $trenutnoVrijeme;
+
 ?>
 <!DOCTYPE html>
 <head>
@@ -88,19 +113,18 @@ if(!isset($_SESSION['id'])){
     <meta name="description" content="Template page">
     <meta name="keywords" content="Template page">
     <meta name="author" content="Omer Dedic">
-    <link href="style.css?v=1.7" rel="stylesheet">
+    <link href="style.css?v=1.3" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="icon" href="slike/icons8-capital-100.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
     <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-
-    <title>Create Blog</title>
+    <title>Edit-Blog</title>
 </head>
 <body>
 
@@ -150,27 +174,27 @@ if(!isset($_SESSION['id'])){
     <!--End of navbar fixed left-->
 
     <!--Page content-->
-        <div class="content-dashboard-create-blog">
-
-                <form id="blogForm" class="forma-create-blog" method="post" action="unos_bloga.php" enctype="multipart/form-data">
-                    <h1 class="create-blog-header"> KREIRAJ BLOG </h1>
-                    <div class="pdtpblog">
+        <div class="content-dashboard" style="display: flex; justify-content: center; height: 100vh; margin-left: 200px;">
+        
+            <form id="blogForm" class="forma-create-blog" method="post" action="unos_bloga.php" enctype="multipart/form-data" style="margin-top: -20px;">
+                <h1 class="create-blog-header"> UREDI BLOG </h1>
+                    <div class="pdtpblogdt">
                         <div class="top-top-top">
                                 <div class="naslov-create">
                                     <label for="naslov-blog">Naslov:</label><br>
-                                    <input class="top-input-field-create-blog" type="text" id="blogTitle" name="naslov-blog" required>
+                                    <input class="top-input-field-create-blog" type="text" id="blogTitle" name="naslov-blog" value="<?= htmlspecialchars($blog['naslov']) ?>">
                                 </div>
                                 <div class="podnaslov-create">
                                     <label for="podnaslov-blog">Podnaslov:</label><br>
-                                    <input class="top-input-field-create-blog" type="text" id="podnaslov-blog" name="podnaslov-blog" required><br>
+                                    <input class="top-input-field-create-blog" type="text" id="podnaslov-blog" name="podnaslov-blog" value="<?= htmlspecialchars($blog['podnaslov']) ?>"><br>
                                 </div>
                         </div>
                         <div class="top-section-create-blog">
                             <div class="top-middle-create-blog">
                                 <label for="keywords-blog">Ključne riječi:</label><br>
-                                <input class="input-fields-create-blog" type="text" id="keywords-blog" name="keywords-blog" required>
-                                <button class="generate-button" type="button" id="generate-btn">
-                                    <span id="tekstbtn" class="text-button-create">GENERIŠI TEKST</span>
+                                <input class="input-fields-create-blog" type="text" id="keywords-blog" name="keywords-blog" value="<?= htmlspecialchars($blog['kljucne_rijeci']) ?>">
+                                <button class="generate-button">
+                                    <span class="text-button-create">GENERIŠI NOVI TEKST</span>
                                 </button>
                             </div>
                             <div class="top-right-create-blog">
@@ -181,53 +205,33 @@ if(!isset($_SESSION['id'])){
                             <label for="blogText">Tekst bloga:</label>
                             <div class="textarea-wrapper">
                                 <div id="blogText" style="height: 200px; width: 1000px; font-size: 16px; border-radius: 0px 0px 8px 8px;"></div>
-                                    <input type="hidden" name="blogContent" id="blogContent">
+                                    <input type="hidden" name="blogContent" id="blogContent" value="<?= htmlspecialchars($blog['tekst_bloga']) ?>">
                             </div>
                         </div>
                     </div>
-                    <div class="publish-wrapper">
-                        <div class="btn-group">
-                            <button class="btn-create-blog" id="mainPublishBtn" name="mainPublishBtn" type="submit" data-option="now">Objavi odmah</button>
-                            <button type="button" class="dropdown-toggle"></button>
-                            <ul class="dropdown-menu">
-                            <li data-option="now">Objavi odmah</li>
-                            <li data-option="later">Objavi kasnije</li>
-                            </ul>
+                    <div class="data-lower">
+                        <div class="left-lower-edit">
+                            <p style="padding-top: 45px;"> <b>Datum objave:</b> <p><?= date('d-m-Y H:i', strtotime($blog['datum_objave'])) ?></p> </p>
                         </div>
-
-                        <div id="schedulePicker" style="display: none;">
-                            <label for="scheduleDate">Datum i vrijeme objave:</label><br>
+                        <div id="schedulePickerEdit" style="padding-top: 40px; padding-left: 80px; width: 100%; <?= $sakrijDiv ? 'display:none;' : '' ?>">
+                            <label style="padding-bottom: 10px;" for="scheduleDate">Promjeni datum i vrijeme objave:</label><br>
                             <input type="datetime-local" id="scheduleDate" name="scheduleDate">
                         </div>
+                        <div class="save-changes-btn">
+                            <div class="dugme-div-edit">
+                                <button class="btn-edit-blog-page" id="mainPublishBtn" name="mainPublishBtn" type="submit" style="font-weight: 400;"> Sačuvaj promjene </button>
+                            </div>
+                        </div>
                     </div>
-                </form>
-
+                </form>            
+            
         </div>
     <!--End of page content-->
 
 <script src="https://unpkg.com/filepond/dist/filepond.js"></script>
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script>
-    let publishOption = 'now';
-
-        document.querySelectorAll('.dropdown-menu li').forEach(item => {
-            item.addEventListener('click', function () {
-                publishOption = this.getAttribute('data-option');
-
-                document.getElementById('mainPublishBtn').textContent = this.textContent;
-
-                document.getElementById('schedulePicker').style.display = (publishOption === 'later') ? 'block' : 'none';
-            });
-        });
-
-
-    const inputElement = document.querySelector('#slika');
-    const pond = FilePond.create(inputElement, {
-        instantUpload: false,
-        labelIdle: 'Prevucite ili izaberite datoteku'
-    });
-
-    document.getElementById('blogForm').addEventListener('submit', async function (e) {
+document.getElementById('blogForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const naslov = document.querySelector('input[name="naslov-blog"]').value;
@@ -245,63 +249,44 @@ if(!isset($_SESSION['id'])){
         return;
     }
 
-    if (!file) {
-        notyf.open({
-            type: 'warning',
-            message: 'Molimo izaberite sliku.',
-        });
-        return;
-    }
-
     const formData = new FormData();
+    formData.append('blog_id', <?= (int)$blog['id'] ?>);
     formData.append('naslov-blog', naslov);
     formData.append('podnaslov-blog', podnaslov);
     formData.append('keywords-blog', kljucne_rijeci);
     formData.append('blogContent', tekst_bloga);
-    formData.append('slika', file.file);
-    formData.append('mainPublishBtn', publishOption === 'now' ? 'Objavi odmah' : 'Objavi kasnije');
 
-    if (publishOption === 'later') {
-        const zakazaniDatum = document.getElementById('scheduleDate').value;
-        if (!zakazaniDatum) {
-            notyf.open({
-                type: 'warning',
-                message: 'Molimo unesite datum zakazane objave.',
-            });
-            return;
-        }
+    const zakazaniDatum = document.getElementById('scheduleDate')?.value;
+    if (zakazaniDatum) {
         formData.append('scheduleDate', zakazaniDatum);
     }
 
+    if (file) {
+        formData.append('slika', file.file);
+    }
+
     try {
-        const response = await fetch('unos_bloga.php', {
+        const response = await fetch('update_bloga.php', {
             method: 'POST',
             body: formData
         });
 
         const result = await response.json();
 
-        if (result.status === "success") {
-            const redirectUrl = result.scheduledDate
-                ? `blog-dash.php?success=1&scheduled=${encodeURIComponent(result.scheduledDate)}`
-                : `blog-dash.php?success=1`;
-            
-            window.location.href = redirectUrl;
+        if (result.status === "successEdit") {
+            notyf.success("Blog je uspješno ažuriran.");
+            window.location.href = 'blog-dash.php?successEdit=1';
         } else {
-            notyf.open({
-                type: 'error',
-                message: result.message || "Došlo je do greške prilikom unosa."
-            });
+            notyf.error(result.message || "Došlo je do greške prilikom ažuriranja.");
         }
-
     } catch (error) {
         console.error(error);
-        notyf.error('Greška pri slanju podataka.');
+        notyf.error("Greška prilikom slanja podataka.");
     }
-    });
+});
 </script>
 <script>
-    const notyf = new Notyf({
+const notyf = new Notyf({
         duration: 4000,
         dismissible: true,
         position: {
@@ -311,6 +296,15 @@ if(!isset($_SESSION['id'])){
         types: [
             {
                 type: 'success',
+                background: 'linear-gradient(to right,rgb(55, 195, 109) 14%,rgb(8, 149, 76) 59%)',
+                icon: {
+                    className: 'material-icons',
+                    tagName: 'i',
+                    text: 'check_circle'
+                }
+            },
+            {
+                type: 'successEdit',
                 background: 'linear-gradient(to right,rgb(55, 195, 109) 14%,rgb(8, 149, 76) 59%)',
                 icon: {
                     className: 'material-icons',
@@ -341,7 +335,6 @@ if(!isset($_SESSION['id'])){
 
     const quill = new Quill('#blogText', {
         theme: 'snow',
-        placeholder: 'Unesite tekst bloga...',
         modules: {
             toolbar: [
                 ['bold', 'italic', 'underline'],
@@ -352,93 +345,19 @@ if(!isset($_SESSION['id'])){
         }
     });
 
+    const existingContent = document.getElementById('blogContent').value;
+    quill.clipboard.dangerouslyPasteHTML(existingContent);
+
     document.getElementById('blogForm').addEventListener('submit', function() {
-    document.getElementById('blogContent').value = quill.root.innerHTML;
+        document.getElementById('blogContent').value = quill.root.innerHTML;
     });
 
-    const mainBtn = document.getElementById('mainPublishBtn');
-    const toggleBtn = document.querySelector('.dropdown-toggle');
-    const menu = document.querySelector('.dropdown-menu');
-    const schedulePicker = document.getElementById('schedulePicker');
-
-    toggleBtn.addEventListener('click', () => {
-        const rect = toggleBtn.getBoundingClientRect();
-        const menuHeight = menu.offsetHeight || 80;
-
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const spaceAbove = rect.top;
-
-        if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
-            menu.style.bottom = '100%';
-            menu.style.top = 'auto';
-        } else {
-            menu.style.top = '100%';
-            menu.style.bottom = 'auto';
-        }
-
-        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    const inputElement = document.querySelector('#slika');
+    const pond = FilePond.create(inputElement, {
+        instantUpload: false,
+        labelIdle: 'Prevucite ili izaberite novu datoteku'
     });
 
-    menu.querySelectorAll('li').forEach(item => {
-        item.addEventListener('click', () => {
-            const selected = item.getAttribute('data-option');
-            mainBtn.setAttribute('data-option', selected);
-            mainBtn.textContent = item.textContent;
-            menu.style.display = 'none';
-
-            if (selected === 'later') {
-                schedulePicker.style.display = 'block';
-            } else {
-                schedulePicker.style.display = 'none';
-            }
-        });
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.btn-group')) {
-            menu.style.display = 'none';
-        }
-    });
 </script>
-<script>
-    document.getElementById('generate-btn').addEventListener('click', async () => {
-    const naslov = document.getElementById('blogTitle').value.trim();
-    const podnaslov = document.getElementById('podnaslov-blog').value.trim();
-    const kljucneRijeci = document.getElementById('keywords-blog').value.trim();
-
-    if (!naslov || !podnaslov || !kljucneRijeci) {
-        alert('Molimo unesite naslov, podnaslov i ključne riječi.');
-        return;
-    }
-
-    const btn = document.getElementById('tekstbtn');
-    btn.disabled = true;
-    btn.textContent = 'Generišem...';
-
-    try {
-        const response = await fetch('ai_generate.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ naslov, podnaslov, kljucneRijeci })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            quill.root.innerHTML = result.content;
-        } else {
-            alert('Greška: ' + result.error);
-        }
-    } catch (err) {
-        console.error('Greška u fetch()', err);
-        alert('Došlo je do greške prilikom slanja zahtjeva.');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'GENERIŠI TEKST';
-    }
-    });
-</script>
-
-
 </body>
 </html>
