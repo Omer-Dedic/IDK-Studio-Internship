@@ -4,14 +4,12 @@ $username = "root";
 $password = "";
 $dbname = "bazapodataka";
 
-// Povezivanje s bazom podataka
 $conn = new mysqli($servername, $username, $password, $dbname);
 
 if ($conn->connect_error) {
     die("Greška u povezivanju s bazom: " . $conn->connect_error);
 }
 
-// Upit za dohvaćanje zadnje recenzije
 $sql = "SELECT * FROM recenzija ORDER BY vrijeme_recenzije DESC LIMIT 1";
 $result = $conn->query($sql);
 

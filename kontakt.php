@@ -113,7 +113,7 @@
     <!--Kraj sekcije-->
 
     <!--Mapa-->
-    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2829.8990363744824!2d15.873523912090278!3d44.82362147095!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4761405b49b439fb%3A0x477f0fcaa317893e!2sIDK%20STUDIO%20d.o.o.!5e0!3m2!1sbs!2sba!4v1722854089386!5m2!1sbs!2sba" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2829.8990363744824!2d15.873523912090278!3d44.82362147095!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4761405b49b439fb%3A0x477f0fcaa317893e!2sIDK%20STUDIO%20d.o.o.!5e0!3m2!1sbs!2sba!4v1722854089386!5m2!1sbs!2sba" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
     <!--Kraj mape-->
 
     <!--footer-->

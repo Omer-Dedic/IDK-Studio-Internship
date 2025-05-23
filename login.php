@@ -1,3 +1,20 @@
+<?php
+session_start();
+
+$conn = new mysqli("localhost", "root", "", "bazapodataka");
+if ($conn->connect_error) {
+    die("Konekcija s bazom nije uspjela: " . $conn->connect_error);
+}
+
+$query = "SELECT COUNT(*) as total FROM admin";
+$stmt = $conn->query($query);
+$row = $stmt->fetch_assoc();
+
+if ($row['total'] == 0) {
+    header("Location: create-admin.php");
+    exit();
+}
+?>
 <!DOCTYPE html>
 <head>
 <meta charset="utf-8">
